@@ -1,7 +1,4 @@
-use std::f32::consts::E;
-
-use macroquad::rand::gen_range;
-use macroquad::{prelude::*, texture};
+use macroquad::prelude::*;
 const MIN_SIZE: i32 = 1;
 const MAX_SIZE: i32 = 100;
 const GRID_SIZE: usize = 32;
