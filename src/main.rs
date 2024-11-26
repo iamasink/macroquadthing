@@ -1,4 +1,4 @@
-use macroquad::prelude::*;
+use macroquad::{color, prelude::*};
 use std::time::Duration;
 const MIN_SIZE: i32 = 1;
 const MAX_SIZE: i32 = 100;
@@ -55,17 +55,23 @@ async fn main() {
         }
         if is_key_down(KeyCode::Up) {
             cell_size += 1;
-            if cell_size > MAX_SIZE {
-                cell_size = MAX_SIZE;
-            }
         }
         if is_key_down(KeyCode::Down) {
             cell_size -= 1;
-            if cell_size < MIN_SIZE {
-                cell_size = MIN_SIZE;
-            }
         }
+        if mouse_wheel().1 != 0. {
+            cell_size += (mouse_wheel().1 / 120.).floor() as i32;
+        }
+        // if mouse_wheel().1 < 0. {
+        //     cell_size -= (mouse_wheel().1 / 120.).floor() as i32;
+        // }
 
+        if cell_size < MIN_SIZE {
+            cell_size = MIN_SIZE;
+        }
+        if cell_size > MAX_SIZE {
+            cell_size = MAX_SIZE;
+        }
         // get mouse position
 
         oldmousepos = mousepos;
@@ -97,10 +103,11 @@ async fn main() {
         }
 
         if is_mouse_button_pressed(MouseButton::Left) {
-            grid[mouse_tile_x][mouse_tile_y] = if grid[mouse_tile_x][mouse_tile_y] == 1 {
+            let maximum = 2;
+            grid[mouse_tile_x][mouse_tile_y] = if grid[mouse_tile_x][mouse_tile_y] >= maximum {
                 0
             } else {
-                1
+                grid[mouse_tile_x][mouse_tile_y] + 1
             };
         }
 
@@ -115,13 +122,18 @@ async fn main() {
             l = 0;
             for j in i {
                 // println!("k: {k:?}, j: {j:?}");
-                if j == 1 {
+                if j > 0 {
+                    let colour = match j {
+                        1 => BLACK,
+                        2 => GREEN,
+                        _ => panic!("invalid colour!"),
+                    };
                     draw_rectangle(
                         ((k * cell_size) - x) as f32,
                         ((l * cell_size) - y) as f32,
                         (cell_size) as f32,
                         (cell_size) as f32,
-                        BLACK,
+                        colour,
                     );
                 }
                 l = l + 1;
@@ -133,16 +145,19 @@ async fn main() {
         let fps = get_fps();
         let ft = get_frame_time();
         let frametime_ms = 1000.0 * ft;
+        let wheel = mouse_wheel();
         let str = format!("Pos: {x}, {y}");
         let str2 = format!("fps: {fps}");
         let str3 = format!("frametime: {frametime_ms:.2}ms");
         let str4 = format!("mouse pos: {mousex} {mousey}");
         let str5 = format!("mouse tile: {mouse_tile_x}, {mouse_tile_y}");
+        let str6 = format!("mouse wheel: {wheel:?}");
         draw_text(&str, 20.0, 20.0, 30.0, DARKGRAY);
         draw_text(&str2, 20.0, 40.0, 30.0, DARKGRAY);
         draw_text(&str3, 20.0, 60.0, 30.0, DARKGRAY);
         draw_text(&str4, 20.0, 80.0, 30.0, DARKGRAY);
         draw_text(&str5, 20.0, 100.0, 30.0, DARKGRAY);
+        draw_text(&str6, 20.0, 120.0, 30.0, DARKGRAY);
 
         // next_frame().await;
         // spin_sleep::sleep(Duration::from_millis(time_to_sleep as u64));
