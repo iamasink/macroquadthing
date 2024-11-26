@@ -1,4 +1,4 @@
-use macroquad::{color, prelude::*};
+use macroquad::prelude::*;
 use std::time::Duration;
 const MIN_SIZE: i32 = 1;
 const MAX_SIZE: i32 = 100;
@@ -24,7 +24,8 @@ async fn main() {
     for i in grid {
         l = 0;
         for j in i {
-            println!("l: {l:?}, k: {k:?}");
+            // println!("l: {l:?}, k: {k:?}");
+            // println!("test")
             grid[l][k] = ((l) % 2) as i32;
             l = l + 1;
         }
