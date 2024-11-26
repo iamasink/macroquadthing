@@ -6,3 +6,5 @@ edition = "2021"
 [dependencies]
 macroquad = "0.4"
 rand = "0.8.5"
+spin_sleep = "1.2.1"
+spin_sleep_util = "0.1.1"
