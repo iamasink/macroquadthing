@@ -2,42 +2,42 @@ use macroquad::prelude::*;
 use std::time::Duration;
 const MIN_SIZE: i32 = 1;
 const MAX_SIZE: i32 = 100;
-const GRID_SIZE: usize = 32;
 
 #[macroquad::main("Window")]
 async fn main() {
     // setup spin_sleep
-    let max_fps = 120;
+    let max_fps = 240;
     let mut interval = spin_sleep_util::interval(Duration::from_secs(1) / max_fps);
 
     // vars
     let mut x: i32 = 0;
     let mut y: i32 = 0;
-    let mut grid: [[i32; GRID_SIZE]; GRID_SIZE] = [[0; GRID_SIZE]; GRID_SIZE];
+    let grid_width = 256;
+    let grid_height = 256;
+    let mut grid: Vec<Vec<i32>> = vec![vec![0; grid_height]; grid_width];
+
     let mut mousepos = (0, 0);
     let mut oldmousepos = (0, 0);
-
-    let mut k = 0;
-    let mut l = 0;
-
-    // prefil grid
-    for i in grid {
-        l = 0;
-        for j in i {
-            // println!("l: {l:?}, k: {k:?}");
-            // println!("test")
-            grid[l][k] = ((l) % 2) as i32;
-            l = l + 1;
-        }
-        k = k + 1;
-    }
-    grid[10][2];
 
     let mut click = false;
 
     let mut cell_size: i32 = 64;
 
+    // prefil grid
+    for col in 0..grid_width {
+        for row in 0..grid_height {
+            if col == 0 || col == grid_width - 1 || row == 0 || row == grid_height - 1 {
+                grid[col][row] = 1;
+            } else {
+                grid[col][row] = 0;
+            }
+        }
+    }
+    grid[10][5] = 1;
+
     loop {
+        let mut next_grid = grid.clone();
+
         clear_background(RED);
 
         // handle inputs
@@ -81,21 +81,17 @@ async fn main() {
         let mousex = mousepos.0;
         let mousey = mousepos.1;
         let mouse_tile_x =
-            (((mousex + x) as f32 / (cell_size) as f32).floor() as usize).clamp(0, GRID_SIZE - 1);
+            (((mousex + x) as f32 / (cell_size) as f32).floor() as usize).clamp(0, grid_width - 1);
         let mouse_tile_y =
-            (((mousey + y) as f32 / (cell_size) as f32).floor() as usize).clamp(0, GRID_SIZE - 1);
+            (((mousey + y) as f32 / (cell_size) as f32).floor() as usize).clamp(0, grid_height - 1);
 
-        if !click & is_key_down(KeyCode::E) {
-            grid[mouse_tile_x][mouse_tile_y] = if grid[mouse_tile_x][mouse_tile_y] == 1 {
-                0
-            } else {
-                1
-            };
+        if is_key_down(KeyCode::E) {
+            next_grid[mouse_tile_x][mouse_tile_y] = 3;
             click = true;
         }
-        if click & !is_key_down(KeyCode::E) {
-            click = false;
-        }
+        // if click & !is_key_down(KeyCode::E) {
+        //     click = false;
+        // }
         if is_mouse_button_down(MouseButton::Right) {
             let dx = oldmousepos.0 - mousepos.0;
             let dy = oldmousepos.1 - mousepos.1;
@@ -104,42 +100,47 @@ async fn main() {
         }
 
         if is_mouse_button_pressed(MouseButton::Left) {
-            let maximum = 2;
-            grid[mouse_tile_x][mouse_tile_y] = if grid[mouse_tile_x][mouse_tile_y] >= maximum {
+            let maximum = 3;
+            next_grid[mouse_tile_x][mouse_tile_y] = if grid[mouse_tile_x][mouse_tile_y] >= maximum {
                 0
             } else {
                 grid[mouse_tile_x][mouse_tile_y] + 1
             };
         }
 
-        // draw grid
+        //
 
-        // for each element (array) in grid - y / k
-        // for each elemennt in that array - x / l??????????????
-        // grain of salt cuz i just fiddled till it works
-        let mut k = 0;
-        let mut l = 0;
-        for i in grid {
-            l = 0;
-            for j in i {
-                // println!("k: {k:?}, j: {j:?}");
-                if j > 0 {
-                    let colour = match j {
+        // run sand simulation for cell type 3
+        for col in (0..grid_width) {
+            for row in 0..grid_height - 1 {
+                if grid[col][row] == 3 && grid[col][row + 1] == 0 {
+                    next_grid[col][row] = 0;
+                    next_grid[col][row + 1] = 3;
+                }
+            }
+        }
+
+        grid = next_grid; // Update the grid
+
+        // draw grid
+        for (row_idx, row) in grid.iter().enumerate() {
+            for (col_idx, &cell) in row.iter().enumerate() {
+                if cell > 0 {
+                    let color = match cell {
                         1 => BLACK,
                         2 => GREEN,
-                        _ => panic!("invalid colour!"),
+                        3 => BEIGE,
+                        _ => panic!("Invalid color!"),
                     };
                     draw_rectangle(
-                        ((k * cell_size) - x) as f32,
-                        ((l * cell_size) - y) as f32,
-                        (cell_size) as f32,
-                        (cell_size) as f32,
-                        colour,
+                        ((row_idx as i32 * cell_size) - x) as f32,
+                        ((col_idx as i32 * cell_size) - y) as f32,
+                        cell_size as f32,
+                        cell_size as f32,
+                        color,
                     );
                 }
-                l = l + 1;
             }
-            k = k + 1;
         }
 
         // draw info text
